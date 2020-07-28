@@ -48,6 +48,5 @@ class scriptEditorClass(object):
 
     def defaults(self):
         return dict(geometry=None,
-                    outFontSize=8
-                    )
+                    outFontSize=8)
 

@@ -1,34 +1,28 @@
 import os, sys, re
-try:
-    from PySide.QtGui import *
-    from PySide.QtCore import *
-except:
-    from PySide2.QtGui import *
-    from PySide2.QtCore import *
-    from PySide2.QtWidgets import *
+
+from Qt import QtCore, QtWidgets
 
 from multi_script_editor import scriptEditor
+
 reload(scriptEditor)
 import MaxPlus
-q3dsmax = QApplication.instance()
+q3dsmax = QtWidgets.QApplication.instance()
 
-class MaxDialogEvents(QObject):
+class MaxDialogEvents(QtCore.QObject):
     def eventFilter(self, obj, event):
         import MaxPlus
-        if event.type() == QEvent.WindowActivate:
+        if event.type() == QtCore.QEvent.WindowActivate:
             MaxPlus.CUI.DisableAccelerators()
-        elif event.type() == QEvent.WindowDeactivate:
+        elif event.type() == QtCore.QEvent.WindowDeactivate:
             MaxPlus.CUI.EnableAccelerators()
+
         return False
 
 def show():
-    try:
-        qtwindow = MaxPlus.GetQMaxWindow()
-    except:
-        qtwindow = MaxPlus.GetQMaxMainWindow()
-    se = scriptEditor.scriptEditorClass(parent=qtwindow)
-    #se.installEventFilter(MaxDialogEvents())
+    se = scriptEditor.scriptEditorClass(parent=MaxPlus.GetQMaxWindow())
+    se.installEventFilter(MaxDialogEvents())
     se.runCommand('import MaxPlus')
-    #se.MaxEventFilter = MaxDialogEvents()
-    #se.installEventFilter(se.MaxEventFilter)
+    se.MaxEventFilter = MaxDialogEvents()
+    se.installEventFilter(se.MaxEventFilter)
+    se.setWindowStyle()
     se.show()
