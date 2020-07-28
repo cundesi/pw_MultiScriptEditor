@@ -1,6 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 todo
 .idea
+*.pyc
 tmp
 _backup
 _tmp
