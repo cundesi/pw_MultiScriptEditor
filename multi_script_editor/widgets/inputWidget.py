@@ -1,18 +1,13 @@
-try:
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-except:
-    from PySide2.QtCore import *
-    from PySide2.QtGui import *
-    from PySide2.QtWidgets import *
+from Qt import QtCore, QtGui, QtWidgets
+
 import re
 import jedi
 from pythonSyntax import syntaxHighLighter
 reload(syntaxHighLighter)
 import completeWidget
 reload(completeWidget)
-import settingsManager
-import managers
+from .. import settingsManager
+from .. import managers
 reload(managers)
 from pythonSyntax import design
 # import inspect
@@ -23,15 +18,14 @@ addEndBracket = True
 
 indentLen = 4
 minimumFontSize = 10
-escapeButtons = [Qt.Key_Return, Qt.Key_Enter, Qt.Key_Left, Qt.Key_Right, Qt.Key_Home, Qt.Key_End, Qt.Key_PageUp, Qt.Key_PageDown, Qt.Key_Delete, Qt.Key_Insert, Qt.Key_Escape]
-# font_name = 'Lucida Console'
+escapeButtons = [QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter, QtCore.Qt.Key_Left, QtCore.Qt.Key_Right, QtCore.Qt.Key_Home, QtCore.Qt.Key_End, QtCore.Qt.Key_PageUp, QtCore.Qt.Key_PageDown, QtCore.Qt.Key_Delete, QtCore.Qt.Key_Insert, QtCore.Qt.Key_Escape]
+#font_name = 'Lucida Console'
 font_name = 'Courier'
 
-
-class inputClass(QTextEdit):
-    executeSignal = Signal()
-    saveSignal = Signal()
-    inputSignal = Signal()
+class inputClass(QtWidgets.QTextEdit):
+    executeSignal = QtCore.Signal()
+    saveSignal = QtCore.Signal()
+    inputSignal = QtCore.Signal()
     def __init__(self, parent, desk=None):
 
         # https://github.com/davidhalter/jedi
@@ -39,13 +33,9 @@ class inputClass(QTextEdit):
         super(inputClass, self).__init__(parent)
         self.p = parent
         self.desk = desk
-        self.setWordWrapMode(QTextOption.NoWrap)
-        font = QFont("Courier")
-        font.setStyleHint(QFont.Monospace)
-        font.setFixedPitch(True)
-        self.setFont(font)
-        self.document().setDefaultFont(QFont(font_name, minimumFontSize, QFont.Monospace))
-        metrics = QFontMetrics(self.document().defaultFont())
+        self.setWordWrapMode(QtGui.QTextOption.NoWrap)
+        self.document().setDefaultFont(QtGui.QFont(font_name, minimumFontSize, QtGui.QFont.Normal))
+        metrics = QtGui.QFontMetrics(self.document().defaultFont())
         self.setTabStopWidth(4 * metrics.width(' '))
         self.setAcceptDrops(True)
         self.fs = 12
@@ -54,20 +44,18 @@ class inputClass(QTextEdit):
         # self.customContextMenuRequested.connect(self.openMenu)
         data = settingsManager.scriptEditorClass().readSettings()
         self.applyHightLighter(data.get('theme'))
-        self.setFont(font)
         # self.changeFontSize(False)
-
         self.changeFontSize(True)
 
     def focusOutEvent(self, event):
         self.saveSignal.emit()
         # self.completer.hideMe()
-        QTextEdit.focusOutEvent(self,event)
+        QtWidgets.QTextEdit.focusOutEvent(self,event)
 
     def hideEvent(self, event):
         self.completer.updateCompleteList()
         try:
-            QTextEdit.hideEvent(self,event)
+            QtWidgets.QTextEdit.hideEvent(self,event)
         except:pass
 
     def applyHightLighter(self, theme=None, qss=None):
@@ -143,7 +131,7 @@ class inputClass(QTextEdit):
                 x = futureCompGeo.width() - i.width()
                 y = futureCompGeo.height()+self.completer.lineHeight if (futureCompGeo.height()-i.height())>0 else 0
 
-        pt = self.mapToGlobal(rec.bottomRight()) + QPoint(10-x, -y)
+        pt = self.mapToGlobal(rec.bottomRight()) + QtCore.QPoint(10-x, -y)
         # if managers.context == 'hou':
         #     print self.mapToParent(self.geometry().topLeft())
         self.completer.move(pt)
@@ -157,8 +145,8 @@ class inputClass(QTextEdit):
     def getCurrentIndent(self):
         cursor = self.textCursor()
         auto = self.charBeforeCursor(cursor) == ':'
-        cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
-        cursor.movePosition(QTextCursor.MoveOperation.EndOfLine,QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.EndOfLine,QtGui.QTextCursor.KeepAnchor)
         line = cursor.selectedText()
         result = ''
         if line.strip():
@@ -174,7 +162,7 @@ class inputClass(QTextEdit):
         self.inputSignal.emit()
         parse = 0
         # apply complete
-        if event.modifiers() == Qt.NoModifier and event.key() in [Qt.Key_Return , Qt.Key_Enter]:
+        if event.modifiers() == QtCore.Qt.NoModifier and event.key() in [QtCore.Qt.Key_Return , QtCore.Qt.Key_Enter]:
             if self.completer and self.completer.isVisible():
                 self.completer.applyCurrentComplete()
                 return
@@ -182,15 +170,15 @@ class inputClass(QTextEdit):
             else:
                 add = self.getCurrentIndent()
                 if add:
-                    QTextEdit.keyPressEvent(self, event)
+                    QtWidgets.QTextEdit.keyPressEvent(self, event)
                     cursor = self.textCursor()
                     cursor.insertText(add)
                     self.setTextCursor(cursor)
                     return
         # remove 4 spaces
-        elif event.modifiers() == Qt.NoModifier and event.key() == Qt.Key_Backspace:
+        elif event.modifiers() == QtCore.Qt.NoModifier and event.key() == QtCore.Qt.Key_Backspace:
             cursor = self.textCursor()
-            cursor.movePosition(QTextCursor.MoveOperation.StartOfLine,QTextCursor.KeepAnchor)
+            cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine,QtGui.QTextCursor.KeepAnchor)
             line = cursor.selectedText()
             if line:
                 p = r"    $"
@@ -202,25 +190,25 @@ class inputClass(QTextEdit):
                     self.setTextCursor(cursor)
             parse = 1
         #comment
-        elif event.modifiers() == Qt.AltModifier and event.key() == Qt.Key_Q:
+        elif event.modifiers() == QtCore.Qt.AltModifier and event.key() == QtCore.Qt.Key_Q:
             self.p.tab.comment()
             return
         # execute selected
-        elif event.modifiers() == Qt.ControlModifier and event.key() in [Qt.Key_Return , Qt.Key_Enter]:
+        elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() in [QtCore.Qt.Key_Return , QtCore.Qt.Key_Enter]:
             if self.completer:
                 self.completer.updateCompleteList()
             self.executeSignal.emit()
             return
         # ignore Shift + Enter
-        elif event.modifiers() == Qt.ShiftModifier and event.key() in [Qt.Key_Return , Qt.Key_Enter]:
+        elif event.modifiers() == QtCore.Qt.ShiftModifier and event.key() in [QtCore.Qt.Key_Return , QtCore.Qt.Key_Enter]:
             return
         # duplicate
-        elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_D:
+        elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_D:
             self.duplicate()
             self.update()
             return
         # increase indent
-        elif event.key() == Qt.Key_Tab:
+        elif event.key() == QtCore.Qt.Key_Tab:
             if self.completer:
                 if self.completer.isVisible():
                     self.completer.applyCurrentComplete()
@@ -233,7 +221,7 @@ class inputClass(QTextEdit):
                 self.insertPlainText (' ' * indentLen)
                 return
         # decrease indent
-        elif event.key() == Qt.Key_Backtab:
+        elif event.key() == QtCore.Qt.Key_Backtab:
             self.selectBlocks()
             self.moveSelected(False)
             if self.completer:
@@ -245,18 +233,18 @@ class inputClass(QTextEdit):
                 self.completer.updateCompleteList()
             self.setFocus()
         # go to completer
-        elif event.key() == Qt.Key_Down or event.key() == Qt.Key_Up:
+        elif event.key() == QtCore.Qt.Key_Down or event.key() == QtCore.Qt.Key_Up:
             if self.completer.isVisible():
                 self.completer.activateCompleter(event.key())
                 self.completer.setFocus()
                 return
         # just close completer
-        elif not event.modifiers() == Qt.NoModifier and not event.modifiers() == Qt.ShiftModifier:
+        elif not event.modifiers() == QtCore.Qt.NoModifier and not event.modifiers() == QtCore.Qt.ShiftModifier:
             self.completer.updateCompleteList()
         else:
             parse = 1
 
-        QTextEdit.keyPressEvent(self, event)
+        QtWidgets.QTextEdit.keyPressEvent(self, event)
         # start parse text
         if parse and event.text():
             self.parseText()
@@ -278,7 +266,7 @@ class inputClass(QTextEdit):
             cursor.endEditBlock()
             newEnd = cursor.position()
             cursor.setPosition(start)
-            cursor.setPosition(newEnd, QTextCursor.KeepAnchor)
+            cursor.setPosition(newEnd, QtGui.QTextCursor.KeepAnchor)
             self.document().documentLayout().blockSignals(False)
             self.setTextCursor(cursor)
             self.update()
@@ -291,9 +279,9 @@ class inputClass(QTextEdit):
         start = cursor.selectionStart()
         end = cursor.selectionEnd()
         cursor.setPosition(start)
-        cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
-        cursor.setPosition(end,QTextCursor.KeepAnchor)
-        cursor.movePosition(QTextCursor.MoveOperation.EndOfLine,QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine)
+        cursor.setPosition(end,QtGui.QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.EndOfLine,QtGui.QTextCursor.KeepAnchor)
         text = cursor.selection().toPlainText()
         self.document().documentLayout().blockSignals(False)
         # cursor.removeSelectedText()
@@ -333,8 +321,8 @@ class inputClass(QTextEdit):
         pos = cursor.position()
         linePos = cursor.positionInBlock()
 
-        cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
-        cursor.movePosition(QTextCursor.MoveOperation.EndOfLine,QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine)
+        cursor.movePosition(QtGui.QTextCursor.MoveOperation.EndOfLine,QtGui.QTextCursor.KeepAnchor)
         line = cursor.selectedText()
         cursor.removeSelectedText()
 
@@ -359,7 +347,7 @@ class inputClass(QTextEdit):
         cursor.insertText(res)
         cursor.endEditBlock()
         cursor.clearSelection()
-        cursor.setPosition(pos+ofs,QTextCursor.MoveAnchor)
+        cursor.setPosition(pos+ofs,QtGui.QTextCursor.MoveAnchor)
         return cursor
 
     def duplicate(self):
@@ -370,11 +358,11 @@ class inputClass(QTextEdit):
             end = cursor.selectionEnd()
             cursor.setPosition(end)
             cursor.insertText(sel)
-            cursor.setPosition(end,QTextCursor.KeepAnchor)
+            cursor.setPosition(end,QtGui.QTextCursor.KeepAnchor)
             self.setTextCursor(cursor)
         else: # duplicate line
-            cursor.movePosition(QTextCursor.MoveOperation.StartOfLine)
-            cursor.movePosition(QTextCursor.MoveOperation.EndOfLine,QTextCursor.KeepAnchor)
+            cursor.movePosition(QtGui.QTextCursor.MoveOperation.StartOfLine)
+            cursor.movePosition(QtGui.QTextCursor.MoveOperation.EndOfLine,QtGui.QTextCursor.KeepAnchor)
             line = cursor.selectedText()
             cursor.clearSelection()
             cursor.insertText('\n'+line)
@@ -402,9 +390,9 @@ class inputClass(QTextEdit):
         cursor = self.textCursor()
         start, end = cursor.selectionStart(), cursor.selectionEnd()
         cursor.setPosition(start)
-        cursor.movePosition(QTextCursor.StartOfLine)
-        cursor.setPosition(end, QTextCursor.KeepAnchor)
-        cursor.movePosition(QTextCursor.EndOfLine, QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.StartOfLine)
+        cursor.setPosition(end, QtGui.QTextCursor.KeepAnchor)
+        cursor.movePosition(QtGui.QTextCursor.EndOfLine, QtGui.QTextCursor.KeepAnchor)
         self.setTextCursor(cursor)
         self.document().documentLayout().blockSignals(False)
 
@@ -423,15 +411,15 @@ class inputClass(QTextEdit):
     ########################### DROP
     def dragEnterEvent(self, event):
         event.acceptProposedAction()
-        QTextEdit.dragEnterEvent(self,event)
+        QtWidgets.QTextEdit.dragEnterEvent(self,event)
 
     def dragMoveEvent(self, event):
         event.acceptProposedAction()
-        QTextEdit.dragMoveEvent(self,event)
+        QtWidgets.QTextEdit.dragMoveEvent(self,event)
 
     def dragLeaveEvent(self, event):
         event.accept()
-        QTextEdit.dragLeaveEvent(self,event)
+        QtWidgets.QTextEdit.dragLeaveEvent(self,event)
 
     def dropEvent(self, event):
         event.acceptProposedAction()
@@ -441,15 +429,15 @@ class inputClass(QTextEdit):
             namespace = self.p.namespace
             text = managers.dropEvents[managers.context](namespace, text, event)
             mim.setText(text)
-            QTextEdit.dropEvent(self,event)
+            QtWidgets.QTextEdit.dropEvent(self,event)
         else:
-            QTextEdit.dropEvent(self,event)
+            QtWidgets.QTextEdit.dropEvent(self,event)
 
 
 ################################################################
 
     def wheelEvent(self, event):
-        if event.modifiers() == Qt.ControlModifier:
+        if event.modifiers() == QtCore.Qt.ControlModifier:
             if self.completer:
                 self.completer.updateCompleteList()
             if event.delta() > 0:
@@ -460,7 +448,7 @@ class inputClass(QTextEdit):
                 # self.zoomOut(1)
         # super(inputClass, self).wheelEvent(event)
         else:
-            QTextEdit.wheelEvent(self, event)
+            QtWidgets.QTextEdit.wheelEvent(self, event)
 
     def changeFontSize(self, up):
         if managers.context == 'hou':
@@ -513,7 +501,7 @@ class inputClass(QTextEdit):
         #     if event.button() == Qt.LeftButton:
         #         super(inputClass, self).mousePressEvent(event)
         # else:
-        QTextEdit.mousePressEvent(self,event)
+        QtWidgets.QTextEdit.mousePressEvent(self,event)
 
     def selectWord(self, pattern, number, replace=None):
         text = self.toPlainText()
@@ -524,7 +512,7 @@ class inputClass(QTextEdit):
         if number > len(indexis)-1:
             number = 0
         cursor.setPosition(indexis[number][0])
-        cursor.setPosition(indexis[number][1], QTextCursor.KeepAnchor)
+        cursor.setPosition(indexis[number][1], QtGui.QTextCursor.KeepAnchor)
         if replace:
             cursor.removeSelectedText()
             cursor.insertText(replace)
